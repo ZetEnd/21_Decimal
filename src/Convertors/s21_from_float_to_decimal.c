@@ -91,8 +91,27 @@ static uint64_t round_ties_to_even(double x){
 
 int s21_from_float_to_decimal(float src, s21_decimal* dst){
 
-  if(dst != NULL){
-    
+  if(dst != NULL || isnan(src) != NULL || isinf(src) != NULL){
+
+    const double DECIMAL_MAX_D = 922816251426434e28;
+    const double DECIMAL_MIN_D = 1e-28;
+    // обнулить значение десималь
+    s21_reset_value(dst);
+
+    int sign;
+    // устанавливаем знак числа десималь
+    if(src < 0.0f) sign = 1
+    else sign = 0;
+
+    double abs_src = fabs((double)src);
+
+    if(abs_src == 0.0) return 0;
+    if(abs_src < DECIMAL_MIN_D || abs_src > DECIMAL_MAX_D) return 1;
+
+
+    int exp10 = (int)floor(log10(abs_src));
+    double pow_neg = pow(10.0, -exp10);
+    double norm = abs_src * pow_neg;
   }
 
   
