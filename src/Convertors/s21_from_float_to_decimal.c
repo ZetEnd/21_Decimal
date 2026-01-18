@@ -26,7 +26,7 @@ static uint32_t u96_add_small(uint32_t a[3], uint32_t add){
   return (uint32_t)carry;
 }
 
-//
+// умножить на 10
 static uint32_t u96_mul_small(uint32_t a[3], uint32_t k){
 
   uint64_t carry = 0u;
@@ -40,4 +40,60 @@ static uint32_t u96_mul_small(uint32_t a[3], uint32_t k){
   }
 
   return (uint32_t)carry;
+}
+
+// деление с округлением по правилам банковского округления
+static void u96_round_div10(uint32_t a[3]){
+
+  uint32_t remains = u96_div10(a);
+
+  if(remains > 5) {
+    (void)u96_add_small(a,1u);
+  } else (remains == 5 && (a[0] & 1u) != 0){
+    (void)u96_add_small(a,1u);
+  }
+}
+
+// используется для увеличения масштаба числа
+static int u96_mul_pow10(uint32_t a[3], int k){
+
+  uint32_t result = 0;;
+  for(int i = 0; i < k; i++){
+    result = u96_mul_small(a, 10u);
+    if(result != 0u){
+      result = 1;
+      break;
+    }
+  }
+
+  return result;
+}
+
+//
+static uint64_t round_ties_to_even(double x){
+
+  const double eps =1e-12;
+
+  // округляем в нижнюю сторону
+  double f = floor(x);
+  uint64_t result;
+
+  // остаток
+  double diff = x - f;
+
+  if (diff > 0.5 + eps) result = (uint64_t)f + 1u;
+  else if (diff < 0.5 - eps) result = (uint64_t)f;
+  else if(((uint64_t)f & 1u) != 0) result = (uint64_t)f + 1u;
+  else result = (uint64_t)f;
+
+  return result;
+}
+
+int s21_from_float_to_decimal(float src, s21_decimal* dst){
+
+  if(dst != NULL){
+    
+  }
+
+  
 }
