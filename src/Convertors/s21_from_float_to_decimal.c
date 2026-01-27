@@ -49,7 +49,7 @@ static void u96_round_div10(uint32_t a[3]){
 
   if(remains > 5) {
     (void)u96_add_small(a,1u);
-  } else (remains == 5 && (a[0] & 1u) != 0){
+  } else if (remains == 5 && (a[0] & 1u) != 0) {
     (void)u96_add_small(a,1u);
   }
 }
@@ -91,10 +91,12 @@ static uint64_t round_ties_to_even(double x){
 
 int s21_from_float_to_decimal(float src, s21_decimal* dst){
 
-  if(dst != NULL || isnan(src) != NULL || isinf(src) != NULL){
+  if(dst != NULL || isnan(src) != 0 || isinf(src) != 0){
 
+    /*
     const double DECIMAL_MAX_D = 922816251426434e28;
     const double DECIMAL_MIN_D = 1e-28;
+    */
     // обнулить значение десималь
     s21_reset_value(dst);
 
@@ -103,11 +105,13 @@ int s21_from_float_to_decimal(float src, s21_decimal* dst){
     if(src < 0.0f) sign = 1;
     else sign = 0;
 
+    // берем модуль числа
     double abs_src = fabs((double)src);
 
     if(abs_src == 0.0) return 0;
+    /*
     if(abs_src < DECIMAL_MIN_D || abs_src > DECIMAL_MAX_D) return 1;
-
+    */
 
     int exp10 = (int)floor(log10(abs_src));
     double pow_neg = pow(10.0, -exp10);
@@ -130,7 +134,7 @@ int s21_from_float_to_decimal(float src, s21_decimal* dst){
     uint64_t mantissa7 = round_ties_to_even(scaled);
 
     // проверка на переполнение в коде, 8 цифр
-    if(mantissa7 = 10000000ull){
+    if(mantissa7 == 10000000ull){
       mantissa7 = 1000000ull;
       exp10 += 1;
     }
