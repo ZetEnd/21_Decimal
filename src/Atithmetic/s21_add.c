@@ -58,3 +58,67 @@ static uint32_t u128_div10(uint32_t a[4]){
 
     return (uint32_t)rem;
 }
+
+// banks round after div 10 a 128 bit number
+/*
+adding a one to number if we need to upper round
+*/
+
+static void bankers_round_after_div10_128(uint32_t a[4], uint32_t rem){
+
+    if(rem > 5u || (a[0] & 1u)){
+
+        // We add 1, taking into account the transfer between digits
+        uint64_t s = (uint64_t)a[0] + 1u;
+        a[0] = (uint32_t)s;
+        //transfer to the senior category
+        uint64_t c = s >> 32; // transfir is a (0 or 1)
+        // if there is a transfer
+
+        /*
+        Если есть перенос (c == 1), переполнение в a[0], нужно добавить 1 к a[1] и т.д.
+        */
+        if(c){
+            // we add it to the next category
+            s = (uint64_t)a[1] + 1u; // so if we have a transfer = 1 we add a 1 for next bit
+            a[1] = (uint32_t)s;
+            c = s >> 32; 
+
+            //if there is a transfer again
+            if(c){
+                s = (uint64_t)a[2] + 1u;
+                a[2] = (uint32_t)s;
+                c = s >> 32;
+
+                // we add it to the highest level
+                if(c) a[3] += 1u;
+
+                /*текущая реализация с явными проверками может быть эффективнее, 
+                так как в большинстве случаев переноса дальше первого разряда не будет.
+                */
+            }
+        }
+    }
+}
+
+// Приведение двух чисел к одинаковому масштабу
+//Увеличивает масштаб меньшего числа или уменьшает масштаб большего
+static void align_scales(uint32_t ax[3], int* sa, uint32_t bx[3], int* sb){
+
+    if(*sa != *sb){
+
+        // Убеждаемся, что *sa <= *sb (меняем местами если нужно)
+        if(*sa > *sb){
+            uint32_t tmp[3];
+            // Меняем числа местами
+            u96_copy(tmp, ax);
+            u96_copy(ax, bx);
+            u96_copy(bx, tmp);
+
+            // Меняем масштабы местами
+            int ts = *sa;
+            *sa = *sb;
+            *sb = ts;
+        }
+    }
+}
