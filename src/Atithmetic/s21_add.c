@@ -120,5 +120,77 @@ static void align_scales(uint32_t ax[3], int* sa, uint32_t bx[3], int* sb){
             *sa = *sb;
             *sb = ts;
         }
+
+        // Приводим к общему масштабу
+        while(*sa < *sb){
+
+            uint32_t tmp[3];
+            u96_copy(tmp, ax);
+
+            // пытаемся увеличить масштаб меньшего числа
+            // умножаем на 10
+            if(u96_mul10(tmp) == 0){
+                // если нет переполнения - принимаем результат
+                u96_copy(ax, tmp);
+                (*sa)++;
+            } else {
+                // Иначе уменьшаем масштаб большего числа
+                // Делим на 10
+                uint32_t rem = u96_div10(bx);
+                // округляем результат и уменьшаем масштаб
+                bankers_round_after_div10_96(bx, rem);
+                (*sb)--;
+            }
+        }
     }
+}
+
+// Сложение двух decimal чисел
+// Основная функция сложения, учитывающая знаки и масштабы чисел
+
+int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal* result ){
+
+    memset(result, 0, sizeof(s21_decimal));
+
+    int scale_a = s21_get_scale(&value_1);
+    int scale_b = s21_get_scale(&value_2);
+
+    uint32_t a96[3], b96[3];
+    u96_from_dec(&value_1, a96);
+    u96_from_dec(&value_2, b96);
+
+    align_scales(a96, &scale_a, bb96, &scale_b);
+
+    int sign_a = s21_get_sign(&value_1);
+    int sign_b = s21_get_sign(&value_2);
+
+    uint32_t res96[3] = {0};
+    int sign_res = 0;
+
+    // если знаки одинаковые
+    if(sign_a == sign_b) {
+        u96_copy(res96, a96);
+        // прибавялем 2е число и получаем перенос
+        int carry = u96_add(res96, b96);
+
+        // если есть переполение
+        if(carry){
+
+            // нельзя уменьшить масштаб - выход
+            if(scale_a == 0) return 1;
+
+            // создаем 128 бит число для устранения переполнения
+            uint32_t ext[4] = {res96[0], res96[1], res[2], (uint32_t)carry};
+
+            do{
+                // если нельзя больше уменьшать масштаб - выход
+                if(scale_a == 0) return 1;
+
+                // делим на 10 и округляем уменьшая масштаб
+                uint32_t rem = u128_div10(ext);
+                bankers_round_after_div10_128(ext, rem);
+            } while(ext[3] != 0) // пока есть переполнение
+        }
+    }
+
 }
