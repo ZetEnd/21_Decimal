@@ -159,7 +159,7 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal* result ){
     u96_from_dec(&value_1, a96);
     u96_from_dec(&value_2, b96);
 
-    align_scales(a96, &scale_a, bb96, &scale_b);
+    align_scales(a96, &scale_a, b96, &scale_b);
 
     int sign_a = s21_get_sign(&value_1);
     int sign_b = s21_get_sign(&value_2);
@@ -180,7 +180,7 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal* result ){
             if(scale_a == 0) return 1;
 
             // создаем 128 бит число для устранения переполнения
-            uint32_t ext[4] = {res96[0], res96[1], res[2], (uint32_t)carry};
+            uint32_t ext[4] = {res96[0], res96[1], res96[2], (uint32_t)carry};
 
             do{
                 // если нельзя больше уменьшать масштаб - выход
@@ -189,8 +189,47 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal* result ){
                 // делим на 10 и округляем уменьшая масштаб
                 uint32_t rem = u128_div10(ext);
                 bankers_round_after_div10_128(ext, rem);
-            } while(ext[3] != 0) // пока есть переполнение
+            } while(ext[3] != 0); // пока есть переполнение
+
+            // Копируем обратно в 96-битный формат
+            res96[0] = ext[0];
+            res96[1] = ext[1];
+            res96[2] = ext[2];
+        }
+        // Знак результата = знаку слагаемых
+        sign_res = sign_a;
+    } else {
+        // Если знаки разные - вычитаем
+
+        // Сравниваем модули чисел
+        int cmp = u96_compare(a96, b96);
+
+        // Если числа равны по модулю - результат 0
+        if(cmp ==0){
+            res96[0] = res96[1] = res96[2] = 0;
+            scale_a = 0;
+            sign_res = 0;
+        } else if (cmp > 0){ // Если |a| > |b|
+            u96_copy(res96, a96);
+            // res = a - b
+            u96_sub(res96, b96);
+            sign_res = sign_a;
+        } else {
+            u96_copy(res96, b96);
+            // res = b - a
+            u96_sub(res96, a96);
+            sign_res = sign_b;
         }
     }
+
+    //Удаляем незначащие нули
+    strip_trailing_zeros(res96, &scale_a);
+
+    //Формируем финальный результат
+    u96_to_dec(res96, result);
+    s21_set_scale(result, scale_a);
+    s21_set_sign(result, sign_res);
+
+    return 0;
 
 }
