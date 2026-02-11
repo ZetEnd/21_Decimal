@@ -168,7 +168,7 @@ int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal* result) {
     int Sb = s21_get_scale(&value_2);
     int E = Sa - Sb;
 
-    //
+    // инициализация переменных
     uint32_t Q[3] = {0, 0, 0};
     uint32_t R[3] = {0, 0, 0};
     uint32_t N[3], D[3];
@@ -188,7 +188,7 @@ int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal* result) {
 
         uint32_t tmp[3] = {(uint32_t)out.bits[0], (uint32_t)out.bits[1], (uint32_t)out.bits[2]};
 
-        // если есть переполнение
+        // если есть переполнение 
         if(u96_mul10(tmp)) {
             err = handle_div_overflow_and_round(&out, S, sign, R, D);
 
@@ -208,9 +208,89 @@ int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal* result) {
         u96_divmod(r10, D, qd, rd);
         uint32_t digit = qd[0];
 
-        // qd - 
+        // qd - и есть первая цифра
         uint32_t digit_u96[3] = {digit, 0, 0};
+
+        // если переполнение при добавлении первой цифры x*10+y = xy типа 11*10 + 5 = 115
+        if(u96_add(tmp, digit_u96)){
+
+            // округление при переполнении
+            err = handle_div_overwlof_and_round(&out, S, sign, R, D);
+            if(err) return err;
+        }
+        u96_to_dec(tmp, &out);
+        S++;
+
+        // копируем в старый остаток новый остаток
+        u96_copy(R,rd);
     }
+
+    // если масштаб делителя меньше делимого и нам нужно делить результат
+    if( E > 0) {
+
+        // прибавляем разницу масштабов делителя и делимого к S так как в формуле 10^(-S)
+        int targetS = S + E;
+
+        // пока текущий масштаб больше 28
+        while (targetS > S21_SCALE_MAX){
+            // округляем и уменьшаем масштаб
+            s21_scale_down_one_banker(&out);
+            targetS--;
+        }
+
+        // обновляем масштаб числа
+        S = targetS;
+    } else
+    // если масштаб делителя > масштаба делимого то нам нужно умножать результат
+    if (E > 0){
+        // переменная - сколько раз умножить на 10 
+        int need = -E; 
+
+        // пока нужно умножать
+        while(need > 0){
+
+            // временная переменная для хранения промежуточного результата
+            uint32_t a[3] = {(uint32_t)out.bits[0], (uint32_t)out.bits[1], (uint32_t)out.bits[2]};
+            
+            // если есть переполнение при умножении этой промежуточной переменной на 10
+            if(u96_mul10(a)){
+
+                // если масштаб не уменьшить
+                if(S == 0){
+                    if(sign) return 2;
+                    else return 1;
+                }
+
+                // устанавливаем в переменную масштаб
+                s21_set_scale(&out, S);
+
+                // понижаем масштаб на 1 и округляем
+                s21_scale_down_one_banker(&out);
+
+                // получаем текущий масштаб
+                S = s21_get_scale(&out);
+
+            } else { // иначе если нет переполнения при умножении на 10
+
+                // помещаем текущую умноженную переменную на 10 в мантиссу
+                u96_to_dec(a, &out);
+
+                // понижаем количество требуемых умножений
+                need--;
+            }
+        }
+    }
+
+    // устанавливаем масштаб, знак и проверяем мантиссу на 0
+    s21_set_scale(&out, S);
+    s21_set_sign(&out, sign);
+
+    if(s21_is_zero(&out)){
+        s21_set_sign(&out, 0);
+    }
+
+    *result = out;
+    return 0;
 
 }
 
