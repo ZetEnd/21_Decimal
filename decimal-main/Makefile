@@ -6,7 +6,7 @@ CFLAGS = -std=c11 -Wall -Wextra -O2
 CPPFLAGS = -I. -I/opt/homebrew/opt/check/include
 # Библиотеки для линковки: check (тесты), математика, потоки + путь к библиотекам Check
 LDFLAGS = -L/opt/homebrew/opt/check/lib
-LDLIBS = -lcheck -lm -lpthread
+LDLIBS = -lcheck -lm -lpthread -lsubunit
 
 # Исходные файлы: все .c файлы в текущей директории
 SRC = $(wildcard *.c)
