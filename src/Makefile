@@ -6,8 +6,9 @@ CFLAGS = -std=c11 -Wall -Wextra -O2
 CPPFLAGS = -I. -I/opt/homebrew/opt/check/include
 # Библиотеки для линковки: check (тесты), математика, потоки + путь к библиотекам Check
 LDFLAGS = -L/opt/homebrew/opt/check/lib
-LDLIBS = -lcheck -lm -lpthread
-#LDLIBS = -lcheck -lsubunit -lm -lpthread
+#LDLIBS = -lcheck -lm -lpthread
+# For ubuntu we add a -lsubunit flag
+LDLIBS = -lcheck -lsubunit -lm -lpthread
 
 
 SRC_DIRS = . Arithmetic Comparison Convertors Other

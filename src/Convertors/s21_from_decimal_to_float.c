@@ -17,11 +17,19 @@ int s21_from_decimal_to_float(s21_decimal src, float* dst){
 
     double mantissa = 0.0;
 
-    mantissa += (double)(src.bits[0]) + (double)(src.bits[1]) * pow(2,32) + (double)(src.bits[2]) * pow(2,64);
+    // вначале приводим к типу беззнаковому, и это число в дабл
+    /*
+    В двоичном: 1111 0000 0000 0000 0000 0000 0000 0000
+    Как unsigned: 4,026,531,840
+    Как signed: -268,435,456 (из-за знакового бита)
+    */
+    mantissa += (double)(uint32_t)(src.bits[0]);
+    mantissa += (double)(uint32_t)(src.bits[1]) * pow(2,32);
+    mantissa += (double)(uint32_t)(src.bits[2]) * pow(2,64);
 
     int scale = s21_get_scale(&src);
 
-    if(scale > 0) mantissa /= pow(10. , scale);
+    if(scale > 0) mantissa /= pow(10. ,scale);
 
     if(s21_get_sign(&src)) mantissa = -mantissa;
 
@@ -31,3 +39,4 @@ int s21_from_decimal_to_float(s21_decimal src, float* dst){
   return (dst == NULL);
 
 }
+

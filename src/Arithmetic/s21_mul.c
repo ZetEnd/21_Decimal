@@ -31,7 +31,7 @@ static void mul96(const uint32_t a[3], const uint32_t b[3], uint32_t out[6]){
         for(int j = 0; j < 3; j++){
 
             // Вычисляем произведение текущих разрядов + старое значение + перенос
-            uint32_t cur = (uint64_t)out[i+j] + (uint64_t)a[i]*(uint64_t)b[j] + carry;
+            uint64_t cur = (uint64_t)out[i+j] + (uint64_t)a[i]*(uint64_t)b[j] + carry;
         
             // Младшие 32 бита записываем в текущую ячейку
             out[i+j] = (uint32_t)(cur & 0xFFFFFFFF);
@@ -217,6 +217,8 @@ int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal* result) {
             else
                 err = 1;
             // 2 для отрицательного, 1 для положительного 
+
+            return err;
         }
     }
 

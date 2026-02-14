@@ -115,7 +115,7 @@ static int handle_div_overflow_and_round(s21_decimal* out, int S, int sign, cons
 
     int result = 0;
     // смотрим нужно ли округлять вверх
-    int inc = banker_should_increment( R, D, (uint32_t){(uint32_t)out->bits[0], (uint32_t)out->bits[1], (uint32_t)out->bits[2]});
+    int inc = banker_should_increment( R, D, (uint32_t[]){(uint32_t)out->bits[0], (uint32_t)out->bits[1], (uint32_t)out->bits[2]});
     
     // если нужно
     if(inc){
@@ -215,7 +215,7 @@ int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal* result) {
         if(u96_add(tmp, digit_u96)){
 
             // округление при переполнении
-            err = handle_div_overwlof_and_round(&out, S, sign, R, D);
+            err = handle_div_overflow_and_round(&out, S, sign, R, D);
             if(err) return err;
         }
         u96_to_dec(tmp, &out);
@@ -242,7 +242,7 @@ int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal* result) {
         S = targetS;
     } else
     // если масштаб делителя > масштаба делимого то нам нужно умножать результат
-    if (E > 0){
+    if (E < 0){
         // переменная - сколько раз умножить на 10 
         int need = -E; 
 
