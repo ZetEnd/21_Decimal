@@ -8,8 +8,8 @@ CPPFLAGS = -I. -I/opt/homebrew/opt/check/include
 LDFLAGS = -L/opt/homebrew/opt/check/lib
 #LDLIBS = -lcheck -lm -lpthread
 # For ubuntu we add a -lsubunit flag
-LDLIBS = -lcheck -lsubunit -lm -lpthread
-
+# LDLIBS = -lcheck -lsubunit -lm -lpthread
+LDLIBS = -lcheck -lm -lpthread
 
 SRC_DIRS = . Arithmetic Comparison Convertors Other
 TEST_DIR = tests

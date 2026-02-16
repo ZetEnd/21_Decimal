@@ -91,12 +91,12 @@ static uint64_t round_ties_to_even(double x){
 
 int s21_from_float_to_decimal(float src, s21_decimal* dst){
 
-  if(dst != NULL || isnan(src) != 0 || isinf(src) != 0){
+  if(dst != NULL && isnan(src) != 1 && isinf(src) != 1){
 
-    /*
-    const double DECIMAL_MAX_D = 922816251426434e28;
+    
+    const double DECIMAL_MAX_D = 7.922816251426434e28;
     const double DECIMAL_MIN_D = 1e-28;
-    */
+    
     // обнулить значение десималь
     s21_reset_value(dst);
 
@@ -109,9 +109,9 @@ int s21_from_float_to_decimal(float src, s21_decimal* dst){
     double abs_src = fabs((double)src);
 
     if(abs_src == 0.0) return 0;
-    /*
+    
     if(abs_src < DECIMAL_MIN_D || abs_src > DECIMAL_MAX_D) return 1;
-    */
+    
 
     int exp10 = (int)floor(log10(abs_src));
     double pow_neg = pow(10.0, -exp10);
@@ -168,9 +168,8 @@ int s21_from_float_to_decimal(float src, s21_decimal* dst){
       s21_reset_value(dst);
     }
 
+  } else {
+    return 1;
   }
-
   return 0;
-
-  
 }
